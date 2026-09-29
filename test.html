@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#241738">
+<title>A Little Gift For You ❤️</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow:hidden;overscroll-behavior:none}
+body{
+    height:100dvh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#fff;
+    background:radial-gradient(circle at 50% 20%,#59306f 0,#241738 42%,#0d1025 100%);
+    display:flex;justify-content:center;align-items:center;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-user-select:none;user-select:none
+}
+#stars,#bg{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+.star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle 2s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.2;transform:scale(.7)}to{opacity:1;transform:scale(1.5)}}
+.heart{position:absolute;bottom:-50px;animation:fly linear forwards;opacity:.7;filter:drop-shadow(0 0 7px #ff9fc2)}
+@keyframes fly{
+    0%{transform:translateY(0) scale(.5) rotate(0);opacity:0}
+    20%{opacity:.85}
+    100%{transform:translateY(-110vh) scale(1.3) rotate(360deg);opacity:0}
+}
+
+.container{width:100%;max-width:480px;padding:0 20px;text-align:center;z-index:2}
+.screen{display:none;animation:appear .8s ease}
+.screen.active{display:block}
+@keyframes appear{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
+h1{font-size:clamp(26px,8vw,34px);margin-bottom:14px;text-shadow:0 4px 25px #0008;letter-spacing:.3px;line-height:1.25}
+p{font-size:clamp(15px,4.4vw,17px);line-height:1.7}
+.subtitle{color:#ffdce9}
+
+.main-heart{
+    width:min(44vw,180px);height:min(44vw,180px);margin:clamp(28px,7vh,52px) auto clamp(20px,5vh,34px);
+    border-radius:50%;background:radial-gradient(circle,#fff 0,#fff7fa 48%,#ffd4e4 100%);
+    display:flex;align-items:center;justify-content:center;font-size:clamp(60px,20vw,88px);
+    cursor:pointer;box-shadow:0 0 25px #fff,0 0 75px #ff6f9f;animation:pulse 1.5s infinite;transition:transform .25s
+}
+.main-heart:active{transform:scale(.92)}
+@keyframes pulse{0%,100%{box-shadow:0 0 25px #fff,0 0 55px #ff6f9f}50%{box-shadow:0 0 35px #fff,0 0 100px #ff6f9f}}
+
+button{
+    border:0;padding:15px 28px;min-height:48px;border-radius:30px;background:#fff;color:#e94f7b;
+    font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 8px 25px #0005;transition:transform .2s;font-family:inherit
+}
+button:active{transform:scale(.95)}
+
+/* ===== PHONG BÌ =====
+   Thứ tự lớp (từ sau ra trước):
+   1 .env-back  -> mặt sau
+   2 .letter    -> lá thư (nằm giữa mặt sau và mặt trước)
+   3 .env-front -> mặt trước (túi phong bì, che thư)
+   4 .flap      -> nắp (đóng: nằm trên cùng; mở: lật lên và xuống dưới thư)
+   5 .heart-seal-> dấu niêm phong
+   Khi thư được kéo ra hoàn toàn, .letter được nâng lên lớp 7. */
+.envelope{
+    --w:min(84vw,360px);
+    --h:calc(var(--w) / 1.6);
+    width:var(--w);height:var(--h);
+    margin:calc(var(--h) * 1.05) auto 20px;   /* chừa chỗ cho thư trượt lên */
+    position:relative;cursor:pointer;
+    filter:drop-shadow(0 18px 24px #0006)
+}
+.envelope.open{cursor:default}
+.env-back{
+    position:absolute;inset:0;z-index:1;border-radius:10px;
+    background:linear-gradient(160deg,#f5c2d3,#e9a9c0)
+}
+.env-front{
+    position:absolute;inset:0;z-index:3;pointer-events:none;border-radius:10px;
+    /* 3 mảnh: trái, phải, đáy — chừa lại hình chữ V phía trên cho nắp */
+    background:
+        linear-gradient(to bottom right,#ffe3ec 0%,#ffd3e2 100%);
+    clip-path:polygon(0 0,50% 46%,100% 0,100% 100%,0 100%)
+}
+.letter{
+    position:absolute;width:88%;height:82%;left:6%;bottom:6%;z-index:2;
+    background:linear-gradient(#fffdf7,#fff8e9);color:#555;border-radius:6px;
+    padding:6%;font-size:clamp(13px,3.9vw,15px);line-height:1.6;
+    box-shadow:0 3px 12px #0002;
+    touch-action:none;pointer-events:none;
+    transition:transform .75s cubic-bezier(.2,.8,.2,1)
+}
+.envelope.open .letter{pointer-events:auto;cursor:grab}
+.letter.dragging{transition:none;cursor:grabbing}
+.letter.out{z-index:7}
+.letter .pull{
+    display:none;margin-top:6px;font-size:.85em;color:#e94f7b;font-weight:bold
+}
+.envelope.open:not(.done) .letter .pull{display:block;animation:nudge 1.2s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+.flap{
+    position:absolute;top:0;left:0;width:100%;height:47%;z-index:4;
+    background:linear-gradient(160deg,#f8d0dc,#efb8ca);
+    clip-path:polygon(0 0,100% 0,50% 100%);
+    transform-origin:top center;
+    transition:transform .7s cubic-bezier(.3,.7,.2,1),z-index 0s;
+}
+/* khi mở: lật lên phía trên, rồi hạ xuống dưới lá thư giữa chừng */
+.envelope.open .flap{
+    transform:scaleY(-1);z-index:1;
+    background:linear-gradient(160deg,#eeb2c6,#e39db6);
+    transition:transform .7s cubic-bezier(.3,.7,.2,1),z-index 0s .3s;
+}
+.heart-seal{
+    position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);z-index:5;
+    font-size:clamp(34px,11vw,46px);transition:.4s;filter:drop-shadow(0 3px 5px #b45);pointer-events:none
+}
+.envelope.open .heart-seal{opacity:0;transform:translate(-50%,-50%) scale(1.6)}
+
+/* ===== LỜI NHẮN ===== */
+.message{
+    background:#fffffff2;color:#444;padding:28px 22px;border-radius:26px;
+    box-shadow:0 20px 70px #0007;max-height:82dvh;overflow:auto;-webkit-overflow-scrolling:touch;
+    border:1px solid #fff;-webkit-user-select:text;user-select:text
+}
+.message h2{color:#e94f7b;margin-bottom:16px;font-size:clamp(23px,7vw,28px)}
+.message p{font-size:clamp(15px,4.3vw,16px)}
+.typing{min-height:110px}
+.cursor{display:inline-block;width:2px;height:18px;background:#e94f7b;margin-left:3px;animation:blink .7s infinite}
+@keyframes blink{50%{opacity:0}}
+.more{margin-top:20px;display:none}
+
+.final{
+    position:fixed;inset:0;background:#0c0c1b;z-index:20;display:none;
+    align-items:center;justify-content:center;text-align:center;
+    padding:calc(25px + env(safe-area-inset-top)) 25px calc(25px + env(safe-area-inset-bottom));
+    animation:fadein 1.2s ease
+}
+.final.show{display:flex}
+.final-inner{animation:rise 1.5s ease}
+.final-heart{font-size:clamp(64px,22vw,90px);filter:drop-shadow(0 0 30px #ff6f9f);animation:pulse 1.5s infinite;margin-bottom:25px}
+.final h2{font-size:clamp(24px,7.4vw,30px);line-height:1.5;margin-bottom:12px}
+.final p{color:#d9bfd0;font-size:15px}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+.ripple{position:fixed;border-radius:50%;border:2px solid #fff;pointer-events:none;transform:translate(-50%,-50%);animation:ripple .7s ease-out forwards;z-index:30}
+@keyframes ripple{to{width:180px;height:180px;opacity:0}}
+.particle{position:fixed;pointer-events:none;z-index:30;animation:particle .9s ease-out forwards}
+@keyframes particle{to{transform:translate(var(--x),var(--y)) scale(0);opacity:0}}
+
+@media(max-height:640px){
+    .main-heart{margin:16px auto}
+    h1{margin-bottom:8px}
+    .envelope{--w:min(72vw,300px)}
+}
+@media(prefers-reduced-motion:reduce){
+    .star,.heart,.main-heart,.final-heart{animation:none}
+}
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div id="bg"></div>
+
+<div class="container">
+<section id="screen1" class="screen active">
+    <h1>Hey... ❤️</h1>
+    <p class="subtitle">Có một món quà nhỏ<br>mình muốn gửi cho bạn.</p>
+    <div class="main-heart" onclick="startGift(event)">❤️</div>
+    <p class="subtitle">Chạm vào trái tim nhé...</p>
+</section>
+
+<section id="screen2" class="screen">
+    <h1>Một điều đặc biệt 💕</h1>
+    <p class="subtitle">Nhưng trước khi mở quà...<br>hãy mở chiếc phong bì này.</p>
+    <div class="envelope" id="envelope">
+        <div class="env-back"></div>
+        <div class="letter" id="letter">
+            💌<br><br>Có một điều mình muốn nói với bạn...
+            <div class="pull">↑ Kéo lá thư lên</div>
+        </div>
+        <div class="env-front"></div>
+        <div class="flap"></div>
+        <div class="heart-seal">❤️</div>
+    </div>
+    <p class="subtitle" id="hint">Chạm vào phong bì 💌</p>
+</section>
+
+<section id="screen3" class="screen">
+    <div class="message">
+        <h2>💌 Gửi bạn</h2>
+        <div class="typing"><span id="typed"></span><span class="cursor"></span></div>
+        <button class="more" id="moreBtn" onclick="showFinal()">Còn một điều nữa... ✨</button>
+    </div>
+</section>
+</div>
+
+<div class="final" id="final">
+    <div class="final-inner">
+        <div class="final-heart">❤️</div>
+        <h2>Món quà này<br>chỉ dành cho bạn.</h2>
+        <p>Thank you for being part of my story.</p>
+        <br>
+        <button onclick="location.reload()">Xem lại từ đầu</button>
+    </div>
+</div>
+
+<script>
+const text=[
+    "Có thể món quà này không lớn, cũng chẳng có gì quá đặc biệt.",
+    "Nhưng mình đã dành một chút thời gian để tạo ra nó, chỉ để gửi đến bạn một điều thật đơn giản:",
+    "Cảm ơn vì đã xuất hiện trong cuộc đời mình. ❤️",
+    "Mong rằng mỗi khi nhìn thấy những điều nhỏ bé này, bạn sẽ mỉm cười."
+];
+
+function makeStars(){
+    const s=document.getElementById("stars");
+    for(let i=0;i<60;i++){
+        let x=document.createElement("div");
+        x.className="star";
+        x.style.left=Math.random()*100+"%";
+        x.style.top=Math.random()*100+"%";
+        x.style.animationDelay=Math.random()*2+"s";
+        x.style.animationDuration=(1.5+Math.random()*2)+"s";
+        s.appendChild(x);
+    }
+}
+makeStars();
+
+function createHeart(){
+    let h=document.createElement("div");
+    h.className="heart";
+    h.innerHTML=["❤️","💕","💗","💖","💓"][Math.floor(Math.random()*5)];
+    h.style.left=Math.random()*100+"%";
+    h.style.fontSize=(13+Math.random()*22)+"px";
+    h.style.animationDuration=(5+Math.random()*5)+"s";
+    document.getElementById("bg").appendChild(h);
+    setTimeout(()=>h.remove(),10000);
+}
+setInterval(createHeart,600);
+
+function burst(x,y){
+    let r=document.createElement("div");
+    r.className="ripple";
+    r.style.left=x+"px";r.style.top=y+"px";
+    document.body.appendChild(r);
+    setTimeout(()=>r.remove(),700);
+    for(let i=0;i<10;i++){
+        let p=document.createElement("div");
+        p.className="particle";p.innerHTML="♥";
+        p.style.left=x+"px";p.style.top=y+"px";
+        let a=Math.PI*2*i/10,d=45+Math.random()*70;
+        p.style.setProperty("--x",Math.cos(a)*d+"px");
+        p.style.setProperty("--y",Math.sin(a)*d+"px");
+        document.body.appendChild(p);
+        setTimeout(()=>p.remove(),900);
+    }
+}
+
+function startGift(e){
+    burst(e.clientX,e.clientY);
+    document.getElementById("screen1").classList.remove("active");
+    document.getElementById("screen2").classList.add("active");
+}
+
+/* ===== Mở phong bì: chạm để mở nắp ===== */
+const env=document.getElementById("envelope");
+const letter=document.getElementById("letter");
+const hint=document.getElementById("hint");
+
+env.addEventListener("click",()=>{
+    if(env.classList.contains("open"))return;
+    env.classList.add("open");
+    hint.textContent="Kéo lá thư ra ngoài nhé ✨";
+});
+
+/* ===== Kéo lá thư ra ===== */
+let dragging=false,startY=0,curY=0,moved=0,finishing=false;
+
+function travel(){return env.offsetHeight*1.02}   // quãng kéo để thư ra khỏi phong bì
+
+letter.addEventListener("pointerdown",e=>{
+    if(!env.classList.contains("open")||finishing)return;
+    dragging=true;startY=e.clientY;curY=0;moved=0;
+    letter.classList.add("dragging");
+    letter.setPointerCapture(e.pointerId);
+});
+
+letter.addEventListener("pointermove",e=>{
+    if(!dragging)return;
+    const dy=startY-e.clientY;
+    moved=Math.max(moved,Math.abs(dy));
+    curY=Math.min(Math.max(dy,0),travel());
+    letter.style.transform="translateY("+(-curY)+"px)";
+});
+
+function endDrag(){
+    if(!dragging)return;
+    dragging=false;
+    letter.classList.remove("dragging");
+    // kéo đủ xa, hoặc chỉ chạm nhẹ vào thư -> tự trượt ra
+    if(curY>travel()*0.4||moved<6){pullOut()}
+    else{letter.style.transform="translateY(0)"}
+}
+letter.addEventListener("pointerup",endDrag);
+letter.addEventListener("pointercancel",endDrag);
+
+function pullOut(){
+    finishing=true;
+    env.classList.add("done");
+    letter.style.transform="translateY("+(-env.offsetHeight*1.08)+"px)";
+    // thư đã ra hẳn khỏi phong bì mới nâng lên lớp trên cùng, tránh bị phong bì đè lên
+    setTimeout(()=>{
+        letter.classList.add("out");
+        burst(window.innerWidth/2,window.innerHeight/2);
+    },750);
+    setTimeout(()=>{
+        document.getElementById("screen2").classList.remove("active");
+        document.getElementById("screen3").classList.add("active");
+        typeMessage();
+    },1500);
+}
+
+function typeMessage(){
+    let box=document.getElementById("typed");
+    let i=0;
+    function next(){
+        if(i>=text.length){
+            document.getElementById("moreBtn").style.display="inline-block";
+            return;
+        }
+        let p=document.createElement("p");
+        p.style.marginBottom="14px";
+        box.appendChild(p);
+        let str=text[i],j=0;
+        let timer=setInterval(()=>{
+            p.innerHTML=str.slice(0,++j).replace(/\n/g,"<br>");
+            if(j>=str.length){
+                clearInterval(timer);i++;
+                setTimeout(next,450);
+            }
+        },28);
+    }
+    next();
+}
+
+function showFinal(){
+    document.getElementById("final").classList.add("show");
+    for(let i=0;i<20;i++)setTimeout(createHeart,i*80);
+}
+
+document.addEventListener("click",e=>{
+    if(e.target.tagName!=="BUTTON" && !e.target.closest(".envelope") && !e.target.closest(".main-heart"))
+        burst(e.clientX,e.clientY);
+});
+</script>
+</body>
+</html>
